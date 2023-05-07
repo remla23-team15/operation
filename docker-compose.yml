@@ -1,0 +1,24 @@
+# docker-compose.yml
+services:
+
+  app:
+    build:
+      context: ../app
+    ports:
+      - 8080
+    depends_on:
+      - model-service
+
+  model-service:
+    build:
+      context: ../model-service
+    ports:
+      - 8081
+    depends_on:
+      - model-training
+
+  model-training:
+    build:
+      context: ../model-training
+    ports:
+      - 8082
