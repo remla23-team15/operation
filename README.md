@@ -11,22 +11,7 @@ Make sure you have Docker and Docker Compose installed.
 
 #### Clone
 
-Create a project directory called `remla25-team15`.
-Move inside `remla23-team15` and clone the following services.
-
-Operation:
-```
-git clone https://github.com/remla23-team15/model-service.git
-```
-App:
-```
-git clone https://github.com/remla23-team15/model-service.git
-```
-Model-service:
-```
-git clone https://github.com/remla23-team15/model-service.git
-```
-Model-training:
+Clone the operation repository:
 ```
 git clone https://github.com/remla23-team15/model-service.git
 ```

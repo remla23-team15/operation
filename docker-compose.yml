@@ -2,23 +2,20 @@
 services:
 
   app:
-    build:
-      context: ../app
+    image: "ghcr.io/remla23-team15/app:latest"
     ports:
       - 8080
     depends_on:
       - model-service
 
   model-service:
-    build:
-      context: ../model-service
+    image: "ghcr.io/remla23-team15/model-service:latest"
     ports:
       - 8081
     depends_on:
       - model-training
 
   model-training:
-    build:
-      context: ../model-training
+    image: "ghcr.io/remla23-team15/model-training:latest"
     ports:
       - 8082
