@@ -13,7 +13,7 @@ Make sure you have Docker and Docker Compose installed.
 
 Clone the operation repository:
 ```
-git clone https://github.com/remla23-team15/model-service.git
+git clone https://github.com/remla23-team15/operation.git
 ```
 
 #### Start the containers
