@@ -1,7 +1,7 @@
 # Operation
 Contains all deployment files for Docker Compose &amp; Kubernetes.
 
-## How To Run The Application
+## Run The Application
 
 Follow the instructions to run the application locally.
 
@@ -22,6 +22,14 @@ Move into the `operation` folder and start the services by running:
 ```
 docker-compose up -d
 ```
+
+#### Check it out!
+
+Open your browser and go to:
+```
+localhost:8080
+```
+Type in a review and request a sentiment analysis!
 
 ## Contributors
 
