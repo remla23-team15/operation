@@ -27,7 +27,7 @@ docker-compose up -d
 
 Open your browser and go to:
 ```
-localhost:8080
+localhost:8081
 ```
 Type in a review and request a sentiment analysis!
 
