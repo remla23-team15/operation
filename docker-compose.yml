@@ -1,0 +1,21 @@
+# docker-compose.yml
+services:
+
+  app:
+    image: "ghcr.io/remla23-team15/app:latest"
+    ports:
+      - 8081:80
+    depends_on:
+      - model-service
+
+  model-service:
+    image: "ghcr.io/remla23-team15/model-service:latest"
+    ports:
+      - 8080:8080
+    depends_on:
+      - model-training
+
+  model-training:
+    image: "ghcr.io/remla23-team15/model-training:latest"
+    ports:
+      - 8082:80
