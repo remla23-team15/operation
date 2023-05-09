@@ -1,0 +1,103 @@
+# model-app.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-service-depl
+  labels:
+    app: model-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-service
+  template:
+    metadata:
+      labels:
+        app: model-service
+    spec:
+      containers:
+      - name: model-service
+        image: ghcr.io/remla23-team15/model-service:latest
+        ports:
+          - name: http
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-service-serv
+spec:
+  selector:
+    app: model-service
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-app-depl
+  labels:
+    app: model-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-app
+  template:
+    metadata:
+      labels:
+        app: model-app
+    spec:
+      containers:
+      - name: model-app
+        image: ghcr.io/remla23-team15/app:latest
+        ports:
+        - containerPort: 80
+        env:
+          - name: MY_APP_URL
+            valueFrom:
+              configMapKeyRef:
+                name: my-config
+                key: model.host
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-app-serv
+spec:
+  selector:
+    app: model-app
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  defaultBackend:
+    service:
+      name: model-app-serv
+      port:
+        number: 80
+  # rules:
+  # - host: localhost
+  #   http:
+  #     paths:
+  #     - path: /predict
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: model-service-serv
+  #           port:
+  #             number: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  model.host: "http://model-service-serv:8080"
