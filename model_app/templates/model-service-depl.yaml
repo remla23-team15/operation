@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.model_service_depl.name }}
+  labels:
+    app: {{ .Values.model_service_depl.app }}
+    {{- include "model_app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.model_service_depl.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.model_service_depl.app }}
+      {{- include "model_app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.model_service_depl.app }}
+        {{- include "model_app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.model_service_depl.container }}
+        image: {{ .Values.model_service_depl.image }}:{{ .Values.model_service_depl.version }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        ports:
+          - name: http
+            containerPort: {{ .Values.model_service_depl.port }}

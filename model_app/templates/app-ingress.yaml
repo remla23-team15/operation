@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.app_ingress.name }}
+  labels:
+    {{- include "model_app.labels" . | nindent 4 }}
+spec:
+  defaultBackend:
+    service:
+      name: {{ .Values.model_app_serv.name }}
+      port:
+        number: {{ .Values.model_app_serv.port }}
