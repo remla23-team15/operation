@@ -1,5 +1,5 @@
 apiVersion: v2
-name: model_app
+name: modelapp
 description: A Helm chart for Kubernetes to deploy the model-service and app packages
 
 # A chart can be either an 'application' or a 'library' chart.

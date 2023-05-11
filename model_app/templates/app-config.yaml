@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.app_config.name }}
-  {{- with .Values.app_config.data }}
-  data:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+  name: {{ include "model_app.fullname" . }}-{{ .Values.app_config.name }}
+{{- with .Values.app_config.data }}
+data:
+  {{- toYaml . | nindent 4 }}
+{{- end }}

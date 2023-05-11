@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.model_app_serv.name }}
+  name: {{ include "model_app.fullname" . }}-{{ .Values.model_app_serv.name }}
   labels:
     {{- include "model_app.labels" . | nindent 4 }}
 spec:
   selector:
-    app: {{ .Values.model_app_serv.app }}
+    app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_serv.app }}
   ports:
     - port: {{ .Values.model_app_serv.port }}
       targetPort: {{ .Values.model_app_serv.targetPort }}

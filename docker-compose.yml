@@ -7,6 +7,9 @@ services:
       - 8081:80
     depends_on:
       - model-service-serv
+    environment:
+      - MY_APP_URL=/predict
+      - BACKEND_HOST=model-service-serv:8080
 
   model-service-serv:
     image: "ghcr.io/remla23-team15/model-service:latest"

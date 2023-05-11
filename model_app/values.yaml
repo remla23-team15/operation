@@ -10,9 +10,9 @@
 #   # Overrides the image tag whose default is the chart appVersion.
 #   tag: ""
 
-# imagePullSecrets: []
-# nameOverride: ""
-# fullnameOverride: ""
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -89,7 +89,7 @@ model_service_depl:
   name: model-service-depl
   app: model-service
   replicas: 1
-  container: model-service
+  container: model-service-container
   image: ghcr.io/remla23-team15/model-service
   version: latest
   port: 8080
@@ -98,8 +98,8 @@ model_app_depl:
   name: model-app-depl
   app: model-app
   replicas: 1
-  container: model-app
-  image: ghcr.io/remla23-team15/model-app
+  container: model-app-container
+  image: ghcr.io/remla23-team15/app
   version: latest
   port: 80
 

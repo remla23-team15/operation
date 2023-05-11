@@ -63,6 +63,11 @@ spec:
               configMapKeyRef:
                 name: app-config
                 key: model.path
+          - name: BACKEND_HOST
+            valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: model.backend
 ---
 apiVersion: v1
 kind: Service
@@ -91,4 +96,5 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  model.path: "/predict"
+  model.path: /predict
+  model.backend: model-service-serv:8080
