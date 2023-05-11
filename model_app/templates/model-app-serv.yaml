@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "model_app.labels" . | nindent 4 }}
 spec:
+  type: NodePort
   selector:
     app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_serv.app }}
   ports:

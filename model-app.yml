@@ -74,6 +74,7 @@ kind: Service
 metadata:
   name: model-app-serv
 spec:
+  type: NodePort
   selector:
     app: model-app
   ports:
