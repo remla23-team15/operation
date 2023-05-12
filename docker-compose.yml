@@ -12,5 +12,3 @@ services:
     image: "ghcr.io/remla23-team15/model-service:latest"
     ports:
       - 8080:8080
-    depends_on:
-      - model-training
