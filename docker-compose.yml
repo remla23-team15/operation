@@ -9,6 +9,7 @@ services:
       - model-service-serv
     environment:
       - MY_APP_URL=/predict
+      - MY_APP_FEEDBACK=/feedback
       - BACKEND_HOST=model-service-serv:8080
 
   model-service-serv:
