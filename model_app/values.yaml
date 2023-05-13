@@ -123,5 +123,6 @@ app_ingress:
 app_config:
   name: app-config
   data: {
-    "model.path": "/predict"
+    "model.path": "/predict",
+    "model.feedback": "/feedback"
   }

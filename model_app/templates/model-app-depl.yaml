@@ -29,5 +29,10 @@ spec:
               configMapKeyRef:
                 name: {{ include "model_app.fullname" . }}-{{ .Values.app_config.name }}
                 key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "model_app.fullname" . }}-{{ .Values.app_config.name }}
+                key: model.feedback
           - name: BACKEND_HOST
             value: {{ include "model_app.fullname" . }}-{{ .Values.model_service_serv.name }}:{{ .Values.model_service_serv.port }}
