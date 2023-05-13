@@ -16,3 +16,24 @@ services:
     image: "ghcr.io/remla23-team15/model-service:latest"
     ports:
       - 8080:8080
+  
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    depends_on:
+      - model-service-serv
+      - model-app-serv
+  
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./monitoring/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+      - ./monitoring/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./monitoring/grafana/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
