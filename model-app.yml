@@ -63,6 +63,11 @@ spec:
               configMapKeyRef:
                 name: app-config
                 key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.feedback
           - name: BACKEND_HOST
             valueFrom:
                 configMapKeyRef:
@@ -98,4 +103,5 @@ metadata:
   name: app-config
 data:
   model.path: /predict
+  model.feedback: /feedback
   model.backend: model-service-serv:8080
