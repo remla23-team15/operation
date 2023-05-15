@@ -126,3 +126,17 @@ app_config:
     "model.path": "/predict",
     "model.feedback": "/feedback"
   }
+
+# Monitoring - Prometheus and Grafana
+monitoring:
+  active: true
+  alerts: true
+  dashboard: true
+
+prometheus:
+  name: model-app-prometheus
+  interval: 30s
+  release: monitormodelapp
+
+grafana:
+  name: model-app-grafana
