@@ -326,8 +326,8 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "Restaurants Reviews Sentiment - {{ include "model_app.fullname" . }}",
-      "uid": "restaurant-reviews-sentiment-overview-{{ include "model_app.fullname" . }}",
+      "title": "Restaurants Reviews Sentiment",
+      "uid": "restaurant-reviews-sentiment-overview",
       "version": 1,
       "weekStart": ""
     }

@@ -20,29 +20,6 @@ Move into the `operation` folder and start the services by following one of the 
 $ docker-compose up -d
 ```
 
-### Kubernetes
-```bash
-# K8s configuration
-$ kubectl apply -f model-app.yml
-```
-Enable the communication:
-```bash
-$ minikube tunnel
-```
-or 
-```bash
-$ minikube service model-app-serv --url
-# and access the http://127.0.0.1:xxxxx from the output
-```
-
-### Helm
-```bash
-$ helm install <release_name> ./model_app
-```
-
-
-### ... and check it out!
-
 To access the main page of the application open your browser and go to:
 ```bash
 localhost:8081
@@ -62,6 +39,76 @@ localhost:9090
 and the Grafana interface with the following:
 ```bash
 localhost:3000
+```
+
+Use "admin" and "admin" as username and password to login into grafana and search for the "Restaurants Reviews Sentiment" dashboard under the Dashboards menu.
+
+To stop the run:
+```bash
+$ docker-compose down
+```
+
+### Kubernetes
+```bash
+# K8s configuration
+$ ./k8s_install.sh
+```
+Enable the communication (not necessary for Linux):
+```bash
+$ minikube tunnel
+```
+or 
+```bash
+$ minikube service model-app-serv --url
+# and access the http://127.0.0.1:xxxxx from the output
+```
+
+To access the main page of the application open your browser and go to:
+```bash
+http://ip_address_of_minikube_ingress
+``` 
+Type in a review and request a sentiment analysis! 
+
+Access the metrics with:
+```bash
+http://ip_address_of_minikube_ingress/metrics
+```
+
+Access the Prometheus interface with the following command:
+```bash
+http://ip_address_of_minikube_ingress:30000
+```
+
+and the Grafana interface with the following:
+```bash
+http://ip_address_of_minikube_ingress:30001
+```
+
+Use "admin" and "prom-operator" as username and password to login into grafana and search for the "Restaurants Reviews Sentiment" dashboard under the Dashboards menu.
+
+To stop the run:
+```bash
+$ ./k8s_uninstall.sh
+```
+
+### Helm
+```bash
+# Install prometheus and grafana charts
+$ ./helm_install.sh
+
+# Install the app chart
+$ helm install <release_name> ./model_app
+```
+
+To access the app, follow the same steps listed in the **Kubernetes** section above.
+
+To stop the run:
+```bash
+# Unistall the app chart
+$ helm uninstall <release_name>
+
+# Uninstall prometheus and grafana charts
+$ ./helm_uninstall.sh
 ```
 
 ## Contributors
