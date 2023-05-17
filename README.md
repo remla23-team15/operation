@@ -51,7 +51,7 @@ Type in a review and request a sentiment analysis!
 
 Access the metrics with:
 ```bash
-localhost/metrics
+localhost:8081/metrics
 ```
 
 Access the Prometheus interface with the following command:
