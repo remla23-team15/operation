@@ -1,146 +1,8 @@
-# model-app.yml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: model-service-depl
-  labels:
-    app: model-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: model-service
-  template:
-    metadata:
-      labels:
-        app: model-service
-    spec:
-      containers:
-      - name: model-service
-        image: ghcr.io/remla23-team15/model-service
-        imagePullPolicy: IfNotPresent
-        ports:
-          - name: http
-            containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: model-service-serv
-spec:
-  selector:
-    app: model-service
-  ports:
-  - protocol: TCP
-    port: 8080
-    targetPort: http
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: model-app-depl
-  labels:
-    app: model-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: model-app
-  template:
-    metadata:
-      labels:
-        app: model-app
-    spec:
-      containers:
-      - name: model-app
-        image: ghcr.io/remla23-team15/app
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 80
-        env:
-          - name: MY_APP_URL
-            valueFrom:
-              configMapKeyRef:
-                name: app-config
-                key: model.path
-          - name: MY_APP_FEEDBACK
-            valueFrom:
-              configMapKeyRef:
-                name: app-config
-                key: model.feedback
-          - name: BACKEND_HOST
-            valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: model.backend
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: model-app-serv
-  labels:
-    app: model-app-serv
-spec:
-  type: NodePort
-  selector:
-    app: model-app
-  ports:
-    - port: 80
-      targetPort: 80
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: app-ingress
-spec:
-  defaultBackend:
-    service:
-      name: model-app-serv
-      port:
-        number: 80
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-data:
-  model.path: /predict
-  model.feedback: /feedback
-  model.backend: model-service-serv:8080
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: model-app-prometheus
-  labels:
-    release: monitormodelapp
-spec:
-  selector:
-    matchLabels:
-      app: model-app-serv
-  endpoints:
-  - interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: model-app-prometheus-alerts
-  labels:
-    release: monitormodelapp
-spec:
-  groups:
-    - name: model-app-alerts
-      rules:
-        - alert: ModelAccuracyTooLow
-          expr: (model_accuracy - model_accuracy offset 15m) < 0.4
-          for: 5m
-          labels:
-            severity: Critical
----
+{{- if .Values.monitoring.dashboard }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: model-app-grafana
+  name: {{ include "model_app.fullname" . }}-{{ .Values.grafana.name }}
   labels:
     grafana_dashboard: "1"
 data:
@@ -464,8 +326,9 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "Restaurants Reviews Sentiment",
-      "uid": "restaurant-reviews-sentiment-overview",
+      "title": "Restaurants Reviews Sentiment - {{ include "model_app.fullname" . }}",
+      "uid": "restaurant-reviews-sentiment-overview-{{ include "model_app.fullname" . }}",
       "version": 1,
       "weekStart": ""
     }
+{{- end }}
