@@ -3,7 +3,7 @@ kind: Service
 metadata:
   {{- $dot := . }}
   {{- with .Values.model_service_serv }}
-  name: {{ include "model_app.fullname" . }}-{{ .name }}
+  name: {{ include "model_app.fullname" $dot }}-{{ .name }}
   labels:
     {{- include "model_app.labels" $dot | nindent 4 }}
 spec:

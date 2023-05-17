@@ -1,35 +1,68 @@
 # Operation
-Contains all deployment files for Docker Compose &amp; Kubernetes.
+Contains all deployment files for Docker Compose, Kubernetes &amp; Helm.
 
-## Run The Application
-
+## Setup
 Follow the instructions to run the application locally.
 
-#### Docker
+Make sure you have Docker, Docker Compose, Kubernetes ans Helm installed.
 
-Make sure you have Docker and Docker Compose installed.
-
-#### Clone
-
+### Clone
 Clone the operation repository:
-```
-git clone https://github.com/remla23-team15/operation.git
-```
-
-#### Start the containers
-
-Move into the `operation` folder and start the services by running:
-```
-docker-compose up -d
+```bash
+$ git clone https://github.com/remla23-team15/operation.git
 ```
 
-#### Check it out!
+## 3 ways to run the application:
+Move into the `operation` folder and start the services by following one of the latter set of steps:
 
-Open your browser and go to:
+### Docker-Compose
+```bash
+$ docker-compose up -d
 ```
+
+### Kubernetes
+```bash
+# K8s configuration
+$ kubectl apply -f model-app.yml
+```
+Enable the communication:
+```bash
+$ minikube tunnel
+```
+or 
+```bash
+$ minikube service model-app-serv --url
+# and access the http://127.0.0.1:xxxxx from the output
+```
+
+### Helm
+```bash
+$ helm install <release_name> ./model_app
+```
+
+
+### ... and check it out!
+
+To access the main page of the application open your browser and go to:
+```bash
 localhost:8081
+``` 
+Type in a review and request a sentiment analysis! 
+
+Access the metrics with:
+```bash
+localhost/metrics
 ```
-Type in a review and request a sentiment analysis!
+
+Access the Prometheus interface with the following command:
+```bash
+localhost:9090
+```
+
+and the Grafana interface with the following:
+```bash
+localhost:3000
+```
 
 ## Contributors
 
