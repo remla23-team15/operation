@@ -7,6 +7,9 @@ metadata:
 spec:
   defaultBackend:
     service:
-      name: {{ include "model_app.fullname" . }}-{{ .Values.model_app_serv.name }}
+      {{- $dot := . }} 
+      {{- with .Values.model_app_serv }}
+      name: {{ include "model_app.fullname" $dot }}-{{ .name }}
       port:
-        number: {{ .Values.model_app_serv.port }}
+        number: {{ .port }}
+      {{- end }}

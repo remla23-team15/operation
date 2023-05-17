@@ -1,38 +1,44 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "model_app.fullname" . }}-{{ .Values.model_app_depl.name }}
+  {{- $dot := . }}
+  {{- $c_name := .Values.app_config.name }}
+  {{- with .Values.model_app_depl }}
+  name: {{ include "model_app.fullname" $dot }}-{{ .name }}
   labels:
-    app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_depl.app }}
-    {{- include "model_app.labels" . | nindent 4 }}
+    app: {{ include "model_app.fullname" $dot }}-{{ .app }}
+    {{- include "model_app.labels" $dot | nindent 4 }}
 spec:
-  replicas: {{ .Values.model_app_depl.replicas }}
+  replicas: {{ .replicas }}
   selector:
     matchLabels:
-      app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_depl.app }}
-      {{- include "model_app.selectorLabels" . | nindent 6 }}
+      app: {{ include "model_app.fullname" $dot }}-{{ .app }}
+      {{- include "model_app.selectorLabels" $dot | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_depl.app }}
-        {{- include "model_app.selectorLabels" . | nindent 8 }}
+        app: {{ include "model_app.fullname" $dot }}-{{ .app }}
+        {{- include "model_app.selectorLabels" $dot | nindent 8 }}
     spec:
       containers:
-      - name: {{ include "model_app.fullname" . }}-{{ .Values.model_app_depl.container }}
-        image: {{ .Values.model_app_depl.image }}:{{ .Values.model_app_depl.version }}
-        imagePullPolicy: {{ .Values.imagePullPolicy }}
+      - name: {{ include "model_app.fullname" $dot }}-{{ .container }}
+        image: {{ .image }}:{{ .version }}
+        imagePullPolicy: {{ $.Values.imagePullPolicy }}
         ports:
-        - containerPort: {{ .Values.model_app_depl.port }}
+        - containerPort: {{ .port }}
+  {{- end }}
         env:
           - name: MY_APP_URL
             valueFrom:
               configMapKeyRef:
-                name: {{ include "model_app.fullname" . }}-{{ .Values.app_config.name }}
+                name: {{ include "model_app.fullname" $dot }}-{{ $c_name }}
                 key: model.path
           - name: MY_APP_FEEDBACK
             valueFrom:
               configMapKeyRef:
-                name: {{ include "model_app.fullname" . }}-{{ .Values.app_config.name }}
+                name: {{ include "model_app.fullname" $dot }}-{{ $c_name }}
                 key: model.feedback
           - name: BACKEND_HOST
-            value: {{ include "model_app.fullname" . }}-{{ .Values.model_service_serv.name }}:{{ .Values.model_service_serv.port }}
+          {{- with .Values.model_service_serv }}
+            value: {{ include "model_app.fullname" $dot }}-{{ .name }}:{{ .port }}
+          {{- end }}

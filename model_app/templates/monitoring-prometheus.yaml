@@ -2,31 +2,34 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "model_app.fullname" . }}-{{ .Values.prometheus.name }}
+  {{- $dot := . }}
+  {{- with .Values.prometheus }}
+  name: {{ include "model_app.fullname" $dot }}-{{ .name }}
   labels:
-    release: {{ .Values.prometheus.release }}
+    release: {{ .release }}
 spec:
   selector:
     matchLabels:
-      app: {{ include "model_app.fullname" . }}-{{ .Values.model_app_serv.name }}
+      app: {{ include "model_app.fullname" $dot }}-{{ $.Values.model_app_serv.name }}
   endpoints:
-  - interval: {{ .Values.prometheus.interval }}
-{{- if .Values.monitoring.alerts }}
+  - interval: {{ .interval }}
+{{- if $.Values.monitoring.alerts }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ include "model_app.fullname" . }}-{{ .Values.prometheus.name }}-alerts
+  name: {{ include "model_app.fullname" $dot }}-{{ .name }}-alerts
   labels:
-    release: {{ .Values.prometheus.release }}
+    release: {{ .release }}
 spec:
   groups:
-    - name: {{ include "model_app.fullname" . }}-{{ .Values.prometheus.name }}-alerts
+    - name: {{ include "model_app.fullname" $dot }}-{{ .name }}-alerts
       rules:
         - alert: ModelAccuracyTooLow
           expr: (model_accuracy - model_accuracy offset 15m) < 0.4
           for: 5m
           labels:
             severity: Critical
+{{- end }}            
 {{- end }}
 {{- end }}
