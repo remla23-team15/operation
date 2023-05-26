@@ -1,0 +1,644 @@
+# model-app-istio.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-service-depl
+  labels:
+#    app: model-service
+    { app: model-service, version: v1 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+#      app: model-service
+      { app: model-service, version: v1 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+      labels:
+#        app: model-service
+        { app: model-service, version: v1 }
+    spec:
+      containers:
+      - name: model-service
+        image: ghcr.io/remla23-team15/model-service
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: http
+            containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-service-depl-v2
+  labels:
+#    app: model-service
+    { app: model-service, version: v2 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+#      app: model-service
+      { app: model-service, version: v2 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+      labels:
+#        app: model-service
+        { app: model-service, version: v2 }
+    spec:
+      containers:
+      - name: model-service
+        image: ghcr.io/remla23-team15/model-service
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: http
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-service-serv
+spec:
+  selector:
+    app: model-service
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-app-depl
+  labels:
+#    app: model-app
+    { app: model-app, version: v1 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+#      app: model-app
+      { app: model-app, version: v1 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+      labels:
+#        app: model-app
+        { app: model-app, version: v1 }
+    spec:
+      containers:
+      - name: model-app
+        image: ghcr.io/remla23-team15/app
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+          - name: MY_APP_URL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.feedback
+          - name: BACKEND_HOST
+            valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: model.backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-app-depl-v2
+  labels:
+#    app: model-app
+    { app: model-app, version: v2 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+#      app: model-app
+      { app: model-app, version: v2 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+      labels:
+#        app: model-app
+        { app: model-app, version: v2 }
+    spec:
+      containers:
+      - name: model-app
+        image: ghcr.io/remla23-team15/app
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+          - name: MY_APP_URL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.feedback
+          - name: BACKEND_HOST
+            valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: model.backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-app-serv
+  labels:
+    app: model-app-serv
+spec:
+  type: NodePort
+  selector:
+    app: model-app
+  ports:
+    - port: 80
+      targetPort: 80
+---
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: app-ingress
+#spec:
+#  defaultBackend:
+#    service:
+#      name: model-app-serv
+#      port:
+#        number: 80
+#---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: my-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: model-app-serv
+spec:
+  host: model-app-serv
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: model-service-serv
+spec:
+  host: model-service-serv
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: my-entry-service
+spec:
+  gateways:
+    - my-gateway
+  hosts:
+  - "*"
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+      - destination:
+          host: model-app-serv
+          subset: v1
+        weight: 90
+      - destination:
+          host: model-app-serv
+          subset: v2
+        weight: 10
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: model-service-serv
+spec:
+  hosts:
+  - model-service-serv
+  http:
+  - match:
+    - sourceLabels:
+        version: v2
+    route:
+    - destination:
+        host: model-service-serv
+        subset: v2
+  - route:
+    - destination:
+        host: model-service-serv
+        subset: v1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  model.path: /predict
+  model.feedback: /feedback
+  model.backend: model-service-serv:8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-app-prometheus
+  labels:
+    release: monitormodelapp
+spec:
+  selector:
+    matchLabels:
+      app: model-app-serv
+  endpoints:
+  - interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: model-app-prometheus-alerts
+  labels:
+    release: monitormodelapp
+spec:
+  groups:
+    - name: model-app-alerts
+      rules:
+        - alert: ModelAccuracyTooLow
+          expr: (model_accuracy - model_accuracy offset 15m) < 0.4
+          for: 5m
+          labels:
+            severity: Critical
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: model-app-grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 1,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Model accuracy of predictions",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "builder",
+              "expr": "model_accuracy",
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Model Accuracy",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Total requests amount",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "builder",
+              "expr": "total_predictions",
+              "instant": true,
+              "key": "Q-42236594-5d8d-4ab6-b74a-dec725fe30ac-0",
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Total Requests",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Duration of predictions in seconds",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "builder",
+              "expr": "prediction_duration",
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Predictions Duration",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": [],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "",
+      "title": "Restaurants Reviews Sentiment",
+      "uid": "restaurant-reviews-sentiment-overview",
+      "version": 1,
+      "weekStart": ""
+    }
