@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
       - name: model-app
-        image: ghcr.io/remla23-team15/app
+        image: ghcr.io/remla23-team15/app:1.1.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -140,7 +140,7 @@ spec:
     spec:
       containers:
       - name: model-app
-        image: ghcr.io/remla23-team15/app
+        image: ghcr.io/remla23-team15/app:1.2.1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -246,11 +246,11 @@ spec:
       - destination:
           host: model-app-serv
           subset: v1
-        weight: 90
+        weight: 50
       - destination:
           host: model-app-serv
           subset: v2
-        weight: 10
+        weight: 50
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -281,35 +281,35 @@ data:
   model.feedback: /feedback
   model.backend: model-service-serv:8080
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: model-app-prometheus
-  labels:
-    release: monitormodelapp
-spec:
-  selector:
-    matchLabels:
-      app: model-app-serv
-  endpoints:
-  - interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: model-app-prometheus-alerts
-  labels:
-    release: monitormodelapp
-spec:
-  groups:
-    - name: model-app-alerts
-      rules:
-        - alert: ModelAccuracyTooLow
-          expr: (model_accuracy - model_accuracy offset 15m) < 0.4
-          for: 5m
-          labels:
-            severity: Critical
----
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   name: model-app-prometheus
+#   labels:
+#     release: monitormodelapp
+# spec:
+#   selector:
+#     matchLabels:
+#       app: model-app-serv
+#   endpoints:
+#   - interval: 30s
+# ---
+# apiVersion: monitoring.coreos.com/v1
+# kind: PrometheusRule
+# metadata:
+#   name: model-app-prometheus-alerts
+#   labels:
+#     release: monitormodelapp
+# spec:
+#   groups:
+#     - name: model-app-alerts
+#       rules:
+#         - alert: ModelAccuracyTooLow
+#           expr: (model_accuracy - model_accuracy offset 15m) < 0.4
+#           for: 5m
+#           labels:
+#             severity: Critical
+# ---
 kind: ConfigMap
 apiVersion: v1
 metadata:
