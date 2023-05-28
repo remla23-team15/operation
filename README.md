@@ -51,7 +51,10 @@ $ docker-compose down
 ### Kubernetes
 ```bash
 # K8s configuration
-$ ./k8s_install.sh
+$ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
+
+# App deployment
+$ kubectl apply -f model-app.yml
 ```
 Enable the communication (not necessary for Linux):
 ```bash
@@ -86,15 +89,17 @@ http://ip_address_of_minikube_ingress:30001
 
 Use "admin" and "prom-operator" as username and password to login into grafana and search for the "Restaurants Reviews Sentiment" dashboard under the Dashboards menu.
 
-To stop the run:
+To stop the app run:
 ```bash
-$ ./k8s_uninstall.sh
+$ kubectl delete -f model-app.yml
+
+$ helm uninstall monitormodelapp
 ```
 
 ### Helm
 ```bash
 # Install prometheus and grafana charts
-$ ./helm_install.sh
+$ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
 
 # Install the app chart
 $ helm install <release_name> ./model_app
@@ -108,7 +113,7 @@ To stop the run:
 $ helm uninstall <release_name>
 
 # Uninstall prometheus and grafana charts
-$ ./helm_uninstall.sh
+$ helm uninstall monitormodelapp
 ```
 
 ## Contributors
