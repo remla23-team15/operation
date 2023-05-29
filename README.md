@@ -49,6 +49,18 @@ $ docker-compose down
 ```
 
 ### Kubernetes
+
+**Requirements:**
+
+- Minikube must be running with Ingress enabled
+- Prometheus and Grafana Helm charts must be made available using:
+```bash
+$ helm repo add prom-repo https://prometheus-community.github.io/helm-charts
+$ helm repo update
+```
+
+To deploy the app, run:
+
 ```bash
 # K8s configuration
 $ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
@@ -97,6 +109,16 @@ $ helm uninstall monitormodelapp
 ```
 
 ### Helm
+
+- Minikube must be running with Ingress enabled
+- Prometheus and Grafana Helm charts must be made available using:
+```bash
+$ helm repo add prom-repo https://prometheus-community.github.io/helm-charts
+$ helm repo update
+```
+
+To deploy the app, run:
+
 ```bash
 # Install prometheus and grafana charts
 $ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
@@ -114,6 +136,68 @@ $ helm uninstall <release_name>
 
 # Uninstall prometheus and grafana charts
 $ helm uninstall monitormodelapp
+```
+
+## ISTIO
+
+**Requirements:**
+
+- Minikube must be running
+- `istioctl` must be installed (https://istio.io/latest/docs/setup/getting-started)
+
+Install Istio resources
+
+```bash
+$ istioctl install
+
+$ kubectl apply -f istio-1.17.2/samples/addons/prometheus.yaml
+$ kubectl apply -f istio-1.17.2/samples/addons/jaeger.yaml
+$ kubectl apply -f istio-1.17.2/samples/addons/kiali.yaml
+```
+
+Check Istio issues in the cluster
+
+```bash
+$ istioctl analyze
+```
+
+Deploy the app
+
+```bash
+$ kubectl apply -f model-app-istio.yml
+```
+
+To access the deployed app, you can either use:
+
+```bash
+# Localhost connection with:
+$ minikube tunnel
+
+# Or the url of the Istio gateway listed in:
+$ minikube service list
+```
+
+Open Istio dashboards
+
+```bash
+$ istioctl dashboard prometheus
+$ istioctl dashboard kiali
+```
+
+Clear the app deployment
+
+```bash
+$ kubectl delete -f model-app-istio.yml
+```
+
+Remove Istio resources from the cluster
+
+```bash
+# Remove Istio resources
+istioctl uninstall --purge
+
+# Remove Istio namespace
+kubectl delete namespace istio-system
 ```
 
 ## Contributors
