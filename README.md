@@ -191,7 +191,7 @@ $ istioctl dashboard kiali
 
 **Traffic management**
 
-For this exercise, a new version (v2) of the app is deployed where the feedback button for 'correct' is larger than the 'incorrect' button. To test the influence of this change, this new version is served 50% of the time. Otherwise the old version (v1) is served.
+For this exercise, a new version (v2) of the app is deployed where the feedback button for 'correct' is larger than the 'incorrect' button. To test the influence of this change, this new version is served 50% of the time. Otherwise the old version (v1) is served. (These percentages can of course be changed to simulate a canary release instead.)
 
 For each app version, a seperate back-end (model-service) is deployed. They are labeled v1 and v2 and serve the respective app version. Note however that these back-ends have the same version of model-service. Seperate back-end deployments are necessary because the metrics are collected in the model-service.
 
