@@ -201,9 +201,16 @@ When accessing the application, a cookie with the apps version is set. Requests 
 
 <br />
 
-**Example** 
+**Example experiment** 
 
-Once we have received some traffic in our application, we can use the prometheus dashboard to see the metrics `correct_predictions` and `model_accuracy`. We could for example discover that our new app version (with the bigger 'correct' button) leads to more correct predictions and a higher accuracy.
+Let's say we have the hypothesis that the size of the 'correct' and 'incorrect' buttons does **not** influence peoples judgement. To test this, we deployed a new version of the app where the 'correct' button is larger than the 'incorrect' button. Both versions are served 50% of the time.
+
+We added metrics to monitor our experiment:
+- `correct_predictions` increments each time a user labels the models prediction as correct. 
+- `total_predictions` increments for each time feedback is given.
+- `model_accuracy` = `correct_predictions` / `total_predictions`
+
+We can use the prometheus dashboard to monitor the metrics. We could for example discover that our new app version (with the bigger 'correct' button) leads to more correct predictions and a higher accuracy. After some calculations we conclude that the difference is significant and conclude that the size of button actually does influence peoples judgement. We must thus be careful with button layout if we want accurate feedback. This is especially important if we want to use the correct/incorrect feedback can be used to further train the model.
 
 <img src='images/istio_example_correct_predictions.png' width = 50%>
 
