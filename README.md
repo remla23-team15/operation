@@ -12,10 +12,15 @@ Clone the operation repository:
 $ git clone https://github.com/remla23-team15/operation.git
 ```
 
-## 3 ways to run the application:
+### Ways to run the application:
 Move into the `operation` folder and start the services by following one of the latter set of steps:
 
-### Docker-Compose
+1. [Docker Compose](#docker-compose) (assignment 1)
+2. [Kubernetes](#kubernetes) (assignment 2)
+3. [Helm](#helm) (assignment 2)
+4. [Kubernetes + istio](#istio) (assignment 3)
+
+## Docker-Compose
 ```bash
 $ docker-compose up -d
 ```
@@ -48,7 +53,7 @@ To stop the run:
 $ docker-compose down
 ```
 
-### Kubernetes
+## Kubernetes
 
 **Requirements:**
 
@@ -108,7 +113,7 @@ $ kubectl delete -f model-app.yml
 $ helm uninstall monitormodelapp
 ```
 
-### Helm
+## Helm
 
 - Minikube must be running with Ingress enabled
 - Prometheus and Grafana Helm charts must be made available using:
@@ -183,6 +188,28 @@ Open Istio dashboards
 $ istioctl dashboard prometheus
 $ istioctl dashboard kiali
 ```
+
+**Traffic management**
+
+For this exercise, a new version (v2) of the app is deployed where the feedback button for 'correct' is larger than the 'incorrect' button. To test the influence of this change, this new version is served 50% of the time. Otherwise the old version (v1) is served.
+
+For each app version, a seperate back-end (model-service) is deployed. They are labeled v1 and v2 and serve the respective app version. Note however that these back-ends have the same version of model-service. Seperate back-end deployments are necessary because the metrics are collected in the model-service.
+
+When accessing the application, a cookie with the apps version is set. Requests to the model-service go through the istio-ingressgateway, which serves as reverse proxy. The cookie is read and the request gets routed the correct model-service version.
+
+<img src='images/Istio_Mesh.png' width = 50%>
+
+<br />
+
+**Example** 
+
+Once we have received some traffic in our application, we can use the prometheus dashboard to see the metrics `correct_predictions` and `model_accuracy`. We could for example discover that our new app version (with the bigger 'correct' button) leads to more correct predictions and a higher accuracy.
+
+<img src='images/istio_example_correct_predictions.png' width = 50%>
+
+<img src='images/istio_example_model_accuracy.png' width = 50%>
+
+<br />
 
 Clear the app deployment
 
