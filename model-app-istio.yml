@@ -231,7 +231,7 @@ spec:
   - match:
       - headers:
           Cookie:
-            exact: model-app-serv-version=v1
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
         uri:
           regex: '^.*\.(ico|png|jpg|js|woff|svg|woff2|eot|ttf|css)$'
     route:
@@ -241,7 +241,7 @@ spec:
   - match:
       - headers:
           Cookie:
-            exact: model-app-serv-version=v2
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
         uri:
           regex: '^.*\.(ico|png|jpg|js|woff|svg|woff2|eot|ttf|css)$'
     route:
@@ -251,12 +251,12 @@ spec:
   - match:
       - headers:
           Cookie:
-            exact: model-app-serv-version=v1
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
         uri:
           prefix: /predict
       - headers:
           Cookie:
-            exact: model-app-serv-version=v1
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
         uri:
           prefix: /feedback
     route:
@@ -266,12 +266,12 @@ spec:
   - match:
       - headers:
           Cookie:
-            exact: model-app-serv-version=v2
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
         uri:
           prefix: /predict
       - headers:
           Cookie:
-            exact: model-app-serv-version=v2
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
         uri:
           prefix: /feedback
     route:
