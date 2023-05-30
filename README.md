@@ -12,10 +12,15 @@ Clone the operation repository:
 $ git clone https://github.com/remla23-team15/operation.git
 ```
 
-## 3 ways to run the application:
+### Ways to run the application:
 Move into the `operation` folder and start the services by following one of the latter set of steps:
 
-### Docker-Compose
+1. [Docker Compose](#docker-compose) (assignment 1)
+2. [Kubernetes](#kubernetes) (assignment 2)
+3. [Helm](#helm) (assignment 2)
+4. [Kubernetes + istio](#istio) (assignment 3)
+
+## Docker-Compose
 ```bash
 $ docker-compose up -d
 ```
@@ -48,10 +53,25 @@ To stop the run:
 $ docker-compose down
 ```
 
-### Kubernetes
+## Kubernetes
+
+**Requirements:**
+
+- Minikube must be running with Ingress enabled
+- Prometheus and Grafana Helm charts must be made available using:
+```bash
+$ helm repo add prom-repo https://prometheus-community.github.io/helm-charts
+$ helm repo update
+```
+
+To deploy the app, run:
+
 ```bash
 # K8s configuration
-$ ./k8s_install.sh
+$ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
+
+# App deployment
+$ kubectl apply -f model-app.yml
 ```
 Enable the communication (not necessary for Linux):
 ```bash
@@ -86,15 +106,27 @@ http://ip_address_of_minikube_ingress:30001
 
 Use "admin" and "prom-operator" as username and password to login into grafana and search for the "Restaurants Reviews Sentiment" dashboard under the Dashboards menu.
 
-To stop the run:
+To stop the app run:
 ```bash
-$ ./k8s_uninstall.sh
+$ kubectl delete -f model-app.yml
+
+$ helm uninstall monitormodelapp
 ```
 
-### Helm
+## Helm
+
+- Minikube must be running with Ingress enabled
+- Prometheus and Grafana Helm charts must be made available using:
+```bash
+$ helm repo add prom-repo https://prometheus-community.github.io/helm-charts
+$ helm repo update
+```
+
+To deploy the app, run:
+
 ```bash
 # Install prometheus and grafana charts
-$ ./helm_install.sh
+$ helm install monitormodelapp prom-repo/kube-prometheus-stack --set prometheus.service.nodePort=30000 --set prometheus.service.type=NodePort --set grafana.service.nodePort=30001 --set grafana.service.type=NodePort
 
 # Install the app chart
 $ helm install <release_name> ./model_app
@@ -108,7 +140,98 @@ To stop the run:
 $ helm uninstall <release_name>
 
 # Uninstall prometheus and grafana charts
-$ ./helm_uninstall.sh
+$ helm uninstall monitormodelapp
+```
+
+## ISTIO
+
+**Requirements:**
+
+- Minikube must be running
+- `istioctl` must be installed (https://istio.io/latest/docs/setup/getting-started)
+
+Install Istio resources
+
+```bash
+$ istioctl install
+
+$ kubectl apply -f istio-1.17.2/samples/addons/prometheus.yaml
+$ kubectl apply -f istio-1.17.2/samples/addons/jaeger.yaml
+$ kubectl apply -f istio-1.17.2/samples/addons/kiali.yaml
+```
+
+Check Istio issues in the cluster
+
+```bash
+$ istioctl analyze
+```
+
+Deploy the app
+
+```bash
+$ kubectl apply -f model-app-istio.yml
+```
+
+To access the deployed app, you can either use:
+
+```bash
+# Localhost connection with:
+$ minikube tunnel
+
+# Or the url of the Istio gateway listed in:
+$ minikube service list
+```
+
+Open Istio dashboards
+
+```bash
+$ istioctl dashboard prometheus
+$ istioctl dashboard kiali
+```
+
+**Traffic management**
+
+For this exercise, a new version (v2) of the app is deployed where the feedback button for 'correct' is larger than the 'incorrect' button. To test the influence of this change, this new version is served 50% of the time. Otherwise the old version (v1) is served. (These percentages can of course be changed to simulate a canary release instead.)
+
+For each app version, a seperate back-end (model-service) is deployed. They are labeled v1 and v2 and serve the respective app version. Note however that these back-ends have the same version of model-service. Seperate back-end deployments are necessary because the metrics are collected in the model-service.
+
+When accessing the application, a cookie with the apps version is set. Requests to the model-service go through the istio-ingressgateway, which serves as reverse proxy. The cookie is read and the request gets routed the correct model-service version.
+
+<img src='images/Istio_Mesh.png' width = 50%>
+
+<br />
+
+**Example experiment** 
+
+Let's say we have the hypothesis that the size of the 'correct' and 'incorrect' buttons does **not** influence peoples judgement. To test this, we deployed a new version of the app where the 'correct' button is larger than the 'incorrect' button. Both versions are served 50% of the time.
+
+We added metrics to monitor our experiment:
+- `correct_predictions` increments each time a user labels the models prediction as correct. 
+- `total_predictions` increments for each time feedback is given.
+- `model_accuracy` = `correct_predictions` / `total_predictions`
+
+We can use the prometheus dashboard to monitor the metrics. We could for example discover that our new app version (with the bigger 'correct' button) leads to more correct predictions and a higher accuracy. After some calculations we conclude that the difference is significant and conclude that the size of button actually does influence peoples judgement. We must thus be careful with button layout if we want accurate feedback. This is especially important if we want to use the correct/incorrect feedback can be used to further train the model.
+
+<img src='images/istio_example_correct_predictions.png' width = 50%>
+
+<img src='images/istio_example_model_accuracy.png' width = 50%>
+
+<br />
+
+Clear the app deployment
+
+```bash
+$ kubectl delete -f model-app-istio.yml
+```
+
+Remove Istio resources from the cluster
+
+```bash
+# Remove Istio resources
+istioctl uninstall --purge
+
+# Remove Istio namespace
+kubectl delete namespace istio-system
 ```
 
 ## Contributors

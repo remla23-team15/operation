@@ -1,0 +1,309 @@
+# model-app-istio.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-service-depl-v1
+  labels:
+    { app: model-service, version: v1 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      { app: model-service, version: v1 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+      labels:
+        { app: model-service, version: v1 }
+    spec:
+      containers:
+      - name: model-service
+        image: ghcr.io/remla23-team15/model-service
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-service-depl-v2
+  labels:
+    { app: model-service, version: v2 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      { app: model-service, version: v2 }
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+      labels:
+        { app: model-service, version: v2 }
+    spec:
+      containers:
+      - name: model-service
+        image: ghcr.io/remla23-team15/model-service
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-service-serv
+spec:
+  selector:
+    app: model-service
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-app-depl-v1
+  labels:
+    { app: model-app, version: v1 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      { app: model-app, version: v1 }
+  template:
+    metadata:
+      labels:
+        { app: model-app, version: v1 }
+    spec:
+      containers:
+      - name: model-app
+        image: ghcr.io/remla23-team15/app:1.1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+          - name: MY_APP_URL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.feedback
+          - name: BACKEND_HOST
+            valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: model.backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-app-depl-v2
+  labels:
+    { app: model-app, version: v2 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      { app: model-app, version: v2 }
+  template:
+    metadata:
+      labels:
+        { app: model-app, version: v2 }
+    spec:
+      containers:
+      - name: model-app
+        image: ghcr.io/remla23-team15/app:1.2.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+          - name: MY_APP_URL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.path
+          - name: MY_APP_FEEDBACK
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: model.feedback
+          - name: BACKEND_HOST
+            valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: model.backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-app-serv
+  labels:
+    app: model-app-serv
+spec:
+  type: NodePort
+  selector:
+    app: model-app
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: model-app-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: model-app-serv
+spec:
+  host: model-app-serv
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: model-service-serv
+spec:
+  host: model-service-serv
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: model-app-entry-service
+spec:
+  gateways:
+    - model-app-gateway
+  hosts:
+  - "*"
+  http:
+  - match:
+      - uri:
+          exact: /
+    route:
+      - destination:
+          host: model-app-serv
+          subset: v1
+        weight: 50
+        headers:
+          response:
+            add:
+              "Set-Cookie": model-app-serv-version=v1; Max-Age=2592000
+      - destination:
+          host: model-app-serv
+          subset: v2
+        weight: 50
+        headers:
+          response:
+            add:
+              "Set-Cookie": model-app-serv-version=v2; Max-Age=2592000
+  - match:
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
+        uri:
+          regex: '^.*\.(ico|png|jpg|js|woff|svg|woff2|eot|ttf|css)$'
+    route:
+      - destination:
+          host: model-app-serv
+          subset: v1
+  - match:
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
+        uri:
+          regex: '^.*\.(ico|png|jpg|js|woff|svg|woff2|eot|ttf|css)$'
+    route:
+      - destination:
+          host: model-app-serv
+          subset: v2
+  - match:
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
+        uri:
+          prefix: /predict
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v1)(;.*)?'
+        uri:
+          prefix: /feedback
+    route:
+      - destination:
+          host: model-service-serv
+          subset: v1
+  - match:
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
+        uri:
+          prefix: /predict
+      - headers:
+          Cookie:
+            regex: '^(.*;?)?(model-app-serv-version=v2)(;.*)?'
+        uri:
+          prefix: /feedback
+    route:
+      - destination:
+          host: model-service-serv
+          subset: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: model-service-serv
+spec:
+  hosts:
+  - model-service-serv
+  http:
+  - match:
+    - sourceLabels:
+        version: v2
+    route:
+    - destination:
+        host: model-service-serv
+        subset: v2
+  - route:
+    - destination:
+        host: model-service-serv
+        subset: v1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  model.path: /predict
+  model.feedback: /feedback
+  model.backend: model-service-serv:8080
