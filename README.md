@@ -224,6 +224,36 @@ Clear the app deployment
 $ kubectl delete -f model-app-istio.yml
 ```
 
+**Additional use case: shadow launch**
+
+In the future, we will most likely develop a new version of the model. After thoroughly testing the new model, we want to shadow launch the model first before bringing the model to production. This way we can monitor the performance of the new model in production without affecting the application.
+
+To implement this, all requests to the model-service v1 and v2 are mirrored to the new model, labeled 'shadow'. The response of the shadow model-service is ignored, but the metrics can be viewed in the Prometheus dashboard.
+
+Deploy the shadow-launch using:
+
+```bash
+$ kubectl apply -f model-app-shadow-launch.yml
+```
+
+After simulating some traffic, the kiali graph looks as follows. The black line shows the mirrored traffic to the model-service-serv and gets directed to the 'shadow' deployment.
+
+<img src='images/istio_shadow_launch.png' width = 50%>
+
+<br />
+
+The metrics gathered from the shadow-launch can be viewed in Prometheus. For example `negative_predictions`:
+
+<img src='images/prometheus_shadow_launch.png' width = 50%>
+
+<br />
+
+Clear the shadow-launch deployment
+
+```bash
+$ kubectl delete -f model-app-shadow-launch.yml
+```
+
 Remove Istio resources from the cluster
 
 ```bash
